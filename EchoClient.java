@@ -1,13 +1,24 @@
 import java.net.*;
+import java.util.Scanner;
 import java.io.*;
 
 public class EchoClient {
 
     public static void main(String[] args) {
         // host and port of service we are connecting to
-        String host = "localhost";
-        int echoServicePortNumber = 3000;
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Host name? ");
+        String host = scanner.nextLine();
+        System.out.println("Port number? ");
+        int echoServicePortNumber = scanner.nextInt();
+
+        System.out.println("Testing [RTT or throughput]? ");
+        String choice = scanner.next();
+
+        // will get rid of hardcoded key later :)
         long key = 1927391273;
+
 
         Socket echoSocket = null;
         PrintWriter out = null;
@@ -36,17 +47,25 @@ public class EchoClient {
             
             // reads in userinput on console and outputs to service?
             // echoes what the service returns
+
+            if(choice.equalsIgnoreCase("RTT")) {
+                measureRTT(8, key, out);
+                measureRTT(32, key, out);
+                measureRTT(512, key, out);
+                measureRTT(1024, key, out);
+            } else if(choice.equalsIgnoreCase("throughput")) {
+
+            } else {
+                System.out.println("Error: Incorrect choice. Exiting.");
+            }
             
-            measureRTT(8, key, out);
-            measureRTT(32, key, out);
-            measureRTT(512, key, out);
-            measureRTT(1024, key, out);
             
             // close connection
             out.close();
             in.close();
             stdIn.close();
             echoSocket.close();
+            scanner.close();
         } catch (IOException ex) {
             System.err.println("IO failure.");
             ex.printStackTrace();

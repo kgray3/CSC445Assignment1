@@ -5,25 +5,41 @@ import java.util.*;
 public class UDPClient {
     public static void main(String[] args) throws IOException {
 
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Host? ");
+        String host = scanner.next();
+        System.out.println("Port number? ");
+        int port = scanner.nextInt();
+        System.out.println("Testing [RTT or throughput]? ");
+        String choice = scanner.next();
+
+        // will get rid of harcoded value later :)
         long key = 1927391273;
             // get a datagram socket
         DatagramSocket socket = new DatagramSocket();
 
-        InetAddress address = InetAddress.getByName("localhost");
-        
-        measureRTT(8, socket, address, key);
-        measureRTT(32, socket, address, key);
-        measureRTT(512, socket, address, key);
-        measureRTT(1024, socket, address, key);
+        InetAddress address = InetAddress.getByName(host);
+
+        if(choice.equalsIgnoreCase("RTT")) {
+            measureRTT(8, socket, address, key, port);
+            measureRTT(32, socket, address, key, port);
+            measureRTT(512, socket, address, key, port);
+            measureRTT(1024, socket, address, key, port);
+        } else if(choice.equalsIgnoreCase("throughput")) {
+
+        } else {
+            System.out.println("Error, incorrect choice. Exiting.");
+        }
 
         socket.close();
+        scanner.close();
     }
 
-    public static void measureRTT(int byteSize, DatagramSocket socket, InetAddress address, long key) throws IOException {
+    public static void measureRTT(int byteSize, DatagramSocket socket, InetAddress address, long key, int port) throws IOException {
         System.out.println("*********************Length " + byteSize + " Message*********************");
         for(int i = 0; i < 30; i++) {
             byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
-            DatagramPacket packet = new DatagramPacket(buf,buf.length,address,3000);
+            DatagramPacket packet = new DatagramPacket(buf,buf.length,address,port);
             long startTime = System.nanoTime();
             socket.send(packet);
             // get response
