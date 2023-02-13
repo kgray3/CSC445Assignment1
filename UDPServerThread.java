@@ -5,6 +5,7 @@ import java.util.Date;
 
 public class UDPServerThread extends Thread {
 
+    long key = 1927391273;
     // init the DatagramSocket
     protected DatagramSocket socket = null;
     // init BufferedReader for reading inputs
@@ -20,8 +21,6 @@ public class UDPServerThread extends Thread {
         super(name);
         // initialize server on port 3000
         socket = new DatagramSocket(3000);
-        
-        String in = "joe mama";
 
     }
 
@@ -35,15 +34,17 @@ public class UDPServerThread extends Thread {
                 // receive request
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
+                
+                System.out.println("The received packet is: " + performXOR(new String(packet.getData(), 0, packet.getLength()), key));
 
                 // figure out response
-                String dString = null;
-                if (in == null)
-                    dString = new Date().toString();
-                else
-                    dString = getNextQuote();
+                String dString = new Date().toString();
+                // if (in == null)
+                //     dString = new Date().toString();
+                // else
+                //     dString = getNextQuote();
 
-                buf = dString.getBytes();
+                buf = performXOR(dString,key).getBytes();
 
                 // send the response to the client at "address" and "port"
                 InetAddress address = packet.getAddress();
@@ -56,20 +57,6 @@ public class UDPServerThread extends Thread {
             }
         }
         socket.close();
-    }
-
-    protected String getNextQuote() {
-        String returnValue = null;
-        try {
-            if ((returnValue = in.readLine()) == null) {
-                in.close();
-                moreQuotes = false;
-                returnValue = "No more quotes. Goodbye.";
-            }
-        } catch (IOException e) {
-            returnValue = "IOException occurred in server.";
-        }
-        return returnValue;
     }
 
     // Method performing XOR encoding/decoding on   a message with an input key

@@ -5,22 +5,29 @@ import java.util.*;
 public class UDPClient {
     public static void main(String[] args) throws IOException {
 
+        long key = 1927391273;
             // get a datagram socket
         DatagramSocket socket = new DatagramSocket();
 
-            // send request
-        byte[] buf = new byte[256];
-        InetAddress address = InetAddress.getByName("localhost");
-        DatagramPacket packet = new DatagramPacket(buf,buf.length,address,3000);
-        socket.send(packet);
 
+        System.out.println("*********************Length 8 Message*********************");
+        InetAddress address = InetAddress.getByName("localhost");
+        
+        for(int i = 0; i < 30; i++) {
+            byte[] buf = performXOR(createMessage(8), key).getBytes();
+            DatagramPacket packet = new DatagramPacket(buf,buf.length,address,3000);
+            long startTime = System.nanoTime();
+            socket.send(packet);
             // get response
-        packet = new DatagramPacket(buf, buf.length);;
-        socket.receive(packet);
+            packet = new DatagramPacket(buf, buf.length);;
+            socket.receive(packet);
+            long duration = System.nanoTime() - startTime;
 
             // display response
-        String received = new String(packet.getData(), 0, packet.getLength());
-        System.out.println("Quote of the Moment: " + received);
+            String received = performXOR(new String(packet.getData(), 0, packet.getLength()),key);
+            System.out.println("Return Buffer: " + received + " RTT: " + duration);
+        }
+
 
         socket.close();
     }
@@ -33,6 +40,15 @@ public class UDPClient {
         }
         //System.out.println("The encrypted message is: " + encryptedResponse);
         return xorResponse;
+    }
+
+    // Method to create a message of an input byte size
+    public static String createMessage(int bytes) {
+        String message = "";
+        for(int i = 0; i < bytes; i++) {
+            message += 'a';
+        }
+        return message;
     }
     
 }
