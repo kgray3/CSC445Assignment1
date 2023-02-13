@@ -32,49 +32,16 @@ public class EchoClient {
         try {
             BufferedReader stdIn =
                 new BufferedReader(new InputStreamReader(System.in));
-            //String userInput;
-            String byteMessage8 = performXOR("Hello hi", key);
-            String byteMessage32 = performXOR("abcdefghijklmnopqrstuvwxyz123456", key);
-            String byteMessage512 = performXOR(createMessage(512), key);
-            String byteMessage1024 = performXOR(createMessage(1024), key);
+
+            
             // reads in userinput on console and outputs to service?
             // echoes what the service returns
-            System.out.println("*********************Length 8 Message*********************");
-            for(int k = 0; k < 30; k++) {
-                long startTime = System.nanoTime();
-                out.println(byteMessage8);
-                long duration = System.nanoTime() - startTime;
-                System.out.println(duration);
-
-            }
-
-            System.out.println("*********************Length 32 Message*********************");
-            for(int k = 0; k < 30; k++) {
-                long startTime = System.nanoTime();
-                out.println(byteMessage32);
-                long duration = System.nanoTime() - startTime;
-                System.out.println(duration);
-
-            }
-
-            System.out.println("*********************Length 512 Message*********************");
-            for(int k = 0; k < 30; k++) {
-                long startTime = System.nanoTime();
-                out.println(byteMessage512);
-                long duration = System.nanoTime() - startTime;
-                System.out.println(duration);
-            }
-
-            System.out.println("*********************Length 1024 Message*********************");
-            for(int k = 0; k < 30; k++) {
-                long startTime = System.nanoTime();
-                out.println(byteMessage1024);
-                long duration = System.nanoTime() - startTime;
-                System.out.println(duration);
-            }
             
+            measureRTT(8, key, out);
+            measureRTT(32, key, out);
+            measureRTT(512, key, out);
+            measureRTT(1024, key, out);
             
-
             // close connection
             out.close();
             in.close();
@@ -84,6 +51,16 @@ public class EchoClient {
             System.err.println("IO failure.");
             ex.printStackTrace();
         }
+    }
+
+    public static void measureRTT(int byteSize, long key, PrintWriter out) {
+        System.out.println("*********************Length " + byteSize + " Message*********************");
+            for(int k = 0; k < 30; k++) {
+                long startTime = System.nanoTime();
+                out.println(performXOR(createMessage(byteSize),key));
+                long duration = System.nanoTime() - startTime;
+                System.out.println(duration);
+            }
     }
 
     // Method performing XOR encoding/decoding on   a message with an input key
@@ -96,6 +73,7 @@ public class EchoClient {
         return xorResponse;
     }
 
+    // Method to create a message of an input byte size
     public static String createMessage(int bytes) {
         String message = "";
         for(int i = 0; i < bytes; i++) {
