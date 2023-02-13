@@ -6,32 +6,53 @@ public class SimpleService {
     
     public static void main(String[] args) {
         try{
+            //TO-DO: Scanner inputs for host, port, and key
+            boolean testingRTT = true;
             long key = 1927391273;
             ServerSocket serverSocket = new ServerSocket(PORT);
-
-            for (;;) {
-                Socket client = serverSocket.accept();
+            Socket client = serverSocket.accept();
 
                 PrintWriter out = new PrintWriter(client.getOutputStream(), true);
                 BufferedReader in =
                     new BufferedReader(new InputStreamReader(client.getInputStream()));
-                
+
+            for (;;) {
+                        
                     String cmd = in.readLine();
+                    String decodedCMD = performXOR(cmd, key);
 
-                    // System.out.println("The decrypted message is: " + performXOR(cmd, key));
+                    /*
+                     * Conditional to determine testing mode or exit.
+                     * --if testing RTT, set the boolean testingRTT to true
+                     * --if testing Throughput, set the boolean testingRTT to false
+                     * --if an exit message is received, close the server
+                     */
+                    if(decodedCMD.equalsIgnoreCase("RTT")) {
+                        testingRTT = true;
+                    } else if (decodedCMD.equalsIgnoreCase("throughput")) {
+                        testingRTT = false;
+                    } else if(decodedCMD.equalsIgnoreCase("exit")) {
+                        out.close();
+                        in.close();
+                        client.close();
+                    }
 
-                    String reply = cmd;
+                    System.out.println("The decoded message is: " + decodedCMD);
+
+                    String reply = "";
+                    if(testingRTT) {
+                        // if we're measuring RTT, echo the message
+                        reply = cmd;
+                    } else{
+                        // if we're measuring throughput, send an 8-byte acknowledgement
+                        reply = performXOR("RECEIVED", key);
+                    }
                     
-                    int len = reply.length();
-
-                    // out.println("HTTP/1.0 200 OK");
-                    // out.println("Content-Length: " + len);
-                    // out.println("Content-Type: text/html\n");
+                    //int len = reply.length();
+                    // send the response
                     out.println(reply);
 
-                    out.close();
-                    in.close();
-                    client.close();
+                    
             }
         }
         catch (IOException ex) {
