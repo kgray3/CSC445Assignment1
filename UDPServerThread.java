@@ -5,12 +5,13 @@ import java.util.Date;
 
 public class UDPServerThread extends Thread {
 
+    // add scanner for key later :)
     long key = 1927391273;
     // init the DatagramSocket
     protected DatagramSocket socket = null;
     // init BufferedReader for reading inputs
     protected BufferedReader in = null;
-    // bool for if there are more packets??
+    // bool to keep running server
     protected boolean moreQuotes = true;
 
     public UDPServerThread() throws IOException {
@@ -25,26 +26,48 @@ public class UDPServerThread extends Thread {
     }
 
     public void run() {
-        // while there are more packets to receive(?)
+        // bool for if we are testing RTT or not
+        boolean testingRTT = true;
         while (moreQuotes) {
             try{
                 // size of request?
-                byte[] buf = new byte[256];
+                byte[] buf = new byte[1024];
 
                 // receive request
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
+
+                // decode the message using XOR
+                String decodedPacket = performXOR(new String(packet.getData(), 0, packet.getLength()), key);
                 
-                System.out.println("The received packet is: " + performXOR(new String(packet.getData(), 0, packet.getLength()), key));
+                /*
+                 * Conditional for determining test "mode"
+                 * --if message "RTT" is received, testingRTT is set to true
+                 * --if message "throughput" is received, testingRTT is set to false
+                 * --if message "exit" is received, close out of server
+                 */
+                if(decodedPacket.equalsIgnoreCase("RTT")) {
+                    testingRTT = true;
+                } else if(decodedPacket.equalsIgnoreCase("throughput")) {
+                    testingRTT = false;
+                } else if(decodedPacket.equalsIgnoreCase("exit")) {
+                    socket.close();
+                }
+
+                System.out.println("The received packet is: " + decodedPacket);
 
                 // figure out response
-                String dString = new Date().toString();
-                // if (in == null)
-                //     dString = new Date().toString();
-                // else
-                //     dString = getNextQuote();
+                String responseString = "";
 
-                buf = performXOR(dString,key).getBytes();
+                // if testing RTT, echo response; otherwise send 8 byte response of "RECEIVED"
+                if(testingRTT) {
+                    responseString = performXOR(decodedPacket, key);
+                } else {
+                    responseString = performXOR("RECEIVED", key);
+                }
+
+                // convert resposne string to bytes for packet creation
+                buf = responseString.getBytes();
 
                 // send the response to the client at "address" and "port"
                 InetAddress address = packet.getAddress();
@@ -56,7 +79,7 @@ public class UDPServerThread extends Thread {
                 moreQuotes = false;
             }
         }
-        socket.close();
+        
     }
 
     // Method performing XOR encoding/decoding on   a message with an input key
