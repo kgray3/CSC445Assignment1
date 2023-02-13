@@ -24,5 +24,15 @@ public class UDPClient {
 
         socket.close();
     }
+
+    // Method performing XOR encoding/decoding on   a message with an input key
+    public static String performXOR(String message, long key) {
+        String xorResponse = "";
+        for(int i = 0; i < message.length(); i++) {
+            xorResponse += (char) (message.charAt(i) ^ key);
+        }
+        //System.out.println("The encrypted message is: " + encryptedResponse);
+        return xorResponse;
+    }
     
 }

@@ -5,8 +5,11 @@ import java.util.Date;
 
 public class UDPServerThread extends Thread {
 
+    // init the DatagramSocket
     protected DatagramSocket socket = null;
+    // init BufferedReader for reading inputs
     protected BufferedReader in = null;
+    // bool for if there are more packets??
     protected boolean moreQuotes = true;
 
     public UDPServerThread() throws IOException {
@@ -15,6 +18,7 @@ public class UDPServerThread extends Thread {
 
     public UDPServerThread(String name) throws IOException {
         super(name);
+        // initialize server on port 3000
         socket = new DatagramSocket(3000);
         
         String in = "joe mama";
@@ -22,9 +26,10 @@ public class UDPServerThread extends Thread {
     }
 
     public void run() {
-
+        // while there are more packets to receive(?)
         while (moreQuotes) {
             try{
+                // size of request?
                 byte[] buf = new byte[256];
 
                 // receive request
@@ -65,5 +70,15 @@ public class UDPServerThread extends Thread {
             returnValue = "IOException occurred in server.";
         }
         return returnValue;
+    }
+
+    // Method performing XOR encoding/decoding on   a message with an input key
+    public static String performXOR(String message, long key) {
+        String xorResponse = "";
+        for(int i = 0; i < message.length(); i++) {
+            xorResponse += (char) (message.charAt(i) ^ key);
+        }
+        //System.out.println("The encrypted message is: " + encryptedResponse);
+        return xorResponse;
     }
 }
