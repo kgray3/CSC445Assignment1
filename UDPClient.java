@@ -9,12 +9,20 @@ public class UDPClient {
             // get a datagram socket
         DatagramSocket socket = new DatagramSocket();
 
-
-        System.out.println("*********************Length 8 Message*********************");
         InetAddress address = InetAddress.getByName("localhost");
         
+        measureRTT(8, socket, address, key);
+        measureRTT(32, socket, address, key);
+        measureRTT(512, socket, address, key);
+        measureRTT(1024, socket, address, key);
+
+        socket.close();
+    }
+
+    public static void measureRTT(int byteSize, DatagramSocket socket, InetAddress address, long key) throws IOException {
+        System.out.println("*********************Length " + byteSize + " Message*********************");
         for(int i = 0; i < 30; i++) {
-            byte[] buf = performXOR(createMessage(8), key).getBytes();
+            byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
             DatagramPacket packet = new DatagramPacket(buf,buf.length,address,3000);
             long startTime = System.nanoTime();
             socket.send(packet);
@@ -25,11 +33,9 @@ public class UDPClient {
 
             // display response
             String received = performXOR(new String(packet.getData(), 0, packet.getLength()),key);
-            System.out.println("Return Buffer: " + received + " RTT: " + duration);
+            System.out.println("Return Buffer: " + received);
+            System.out.println("The RTT is: " + duration);
         }
-
-
-        socket.close();
     }
 
     // Method performing XOR encoding/decoding on   a message with an input key
