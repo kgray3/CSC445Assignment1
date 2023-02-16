@@ -67,7 +67,7 @@ public class EchoClient {
                 in.readLine();
             } else if(choice.equalsIgnoreCase("throughput")) {
                 FileWriter csvWriter = new FileWriter(throughputFile.getName());
-                csvWriter.write("Message Number x Size, Throughput(bits/second)");
+                csvWriter.write("Message Number x Size, Throughput(Megabits/second)");
                 out.println(performXOR("throughput", key));
                 in.readLine();
                 measureThroughput(1024, 1024, key, out, in,csvWriter);
