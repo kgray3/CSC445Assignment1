@@ -54,7 +54,7 @@ public class UDPServerThread extends Thread {
                     socket.close();
                 }
 
-                System.out.println("The received packet is: " + decodedPacket);
+                
 
                 // figure out response
                 String responseString = "";
@@ -74,6 +74,7 @@ public class UDPServerThread extends Thread {
                 int port = packet.getPort();
                 packet = new DatagramPacket(buf, buf.length, address, port);
                 socket.send(packet);
+                System.out.println("The received packet is: " + decodedPacket);
             } catch (IOException e) {
                 e.printStackTrace();
                 moreQuotes = false;

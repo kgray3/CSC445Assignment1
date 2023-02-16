@@ -37,7 +37,7 @@ public class SimpleService {
                         client.close();
                     }
 
-                    System.out.println("The decoded message is: " + decodedCMD);
+                    
 
                     String reply = "";
                     if(testingRTT) {
@@ -51,7 +51,7 @@ public class SimpleService {
                     //int len = reply.length();
                     // send the response
                     out.println(reply);
-
+                    //System.out.println("The decoded message is: " + decodedCMD);
                     
             }
         }

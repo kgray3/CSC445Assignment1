@@ -80,15 +80,20 @@ public class UDPClient {
     // Method for measuring Throughput. Sends x messages based on byteSize and sampleSize. Calculates Throughput.
     public static void measureThroughput(int byteSize, int sampleSize, long key, DatagramSocket socket, InetAddress address, int port) throws IOException {
         System.out.println("********************* " + sampleSize + " X " + byteSize + "Byte Messages*********************");
-        for(int i = 0; i < sampleSize; i++) {
-            byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
-            DatagramPacket packet = new DatagramPacket(buf,buf.length,address,port);
+        for(int k = 0; k < 20; k++) {
             long startTime = System.nanoTime();
-            socket.send(packet);
-            packet = new DatagramPacket(buf, buf.length);
-            socket.receive(packet);
+            for(int i = 0; i < sampleSize; i++) {
+                byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
+                DatagramPacket packet = new DatagramPacket(buf,buf.length,address,port);
+            
+                socket.send(packet);
+                packet = new DatagramPacket(buf, buf.length);
+                socket.receive(packet);
+            
+                //System.out.println("Response: " + performXOR(new String(packet.getData(),0,packet.getLength()), key));
+            
+            }
             long duration = System.nanoTime() - startTime;
-            System.out.println("Response: " + performXOR(new String(packet.getData(),0,packet.getLength()), key));
             double throughput = (byteSize * 8.0)/(duration/1000000000.00);
             System.out.println("Throughput (bits/second): " + throughput);
         }
