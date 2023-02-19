@@ -16,7 +16,7 @@ public class EchoClient {
         System.out.println("Testing [RTT or throughput]? ");
         String choice = scanner.next();
 
-        // will get rid of hardcoded key later :)
+        // key for xor encoding
         long key = 1927391273;
 
         // vars for socket + output/input streams
