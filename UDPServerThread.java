@@ -5,7 +5,7 @@ import java.util.Date;
 
 public class UDPServerThread extends Thread {
 
-    // add scanner for key later :)
+    // key for XOR encoding
     long key = 1927391273;
     // init the DatagramSocket
     protected DatagramSocket socket = null;
@@ -20,7 +20,7 @@ public class UDPServerThread extends Thread {
 
     public UDPServerThread(String name) throws IOException {
         super(name);
-        // initialize server on port 3000
+        // initialize server on port
         socket = new DatagramSocket(3000);
 
     }
@@ -28,13 +28,14 @@ public class UDPServerThread extends Thread {
     public void run() {
         // bool for if we are testing RTT or not
         boolean testingRTT = true;
-        int totalBytes = 1024010;
+        // totalBytes var used for throughput testing
+       // int totalBytes = 1024010;
         while (moreQuotes) {
             try{
-                // size of request?
+                // size of request
                 byte[] buf = new byte[5000];
 
-                // receive request
+                // receive request from client
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
                 socket.receive(packet);
 
@@ -42,54 +43,68 @@ public class UDPServerThread extends Thread {
                 String decodedPacket = performXOR(new String(packet.getData(), 0, packet.getLength()), key);
                 
                 /*
-                 * Conditional for determining test "mode"
+                 * Conditional for determining test "mode"/response if test mode has already been sent
                  * --if message "RTT" is received, testingRTT is set to true
                  * --if message "throughput" is received, testingRTT is set to false
-                 * --if message "exit" is received, close out of server
+                 * --if testingRTT = true, echo message back to client
+                 * --if testingRTT = false, send 8 byte ACK back to client for throughput test
                  */
                 String responseString = "";
                 
                  if(decodedPacket.equalsIgnoreCase("RTT")) {
+                    // set test mode
                     testingRTT = true;
-                } else if(decodedPacket.equalsIgnoreCase("throughput")) {
-                    testingRTT = false;
+                    // return ACK
                     InetAddress address = packet.getAddress();
                     int port = packet.getPort();
                     buf = performXOR("RECEIVED", key).getBytes();
                     packet = new DatagramPacket(buf, buf.length, address, port);
                     socket.send(packet);
-                } else if(decodedPacket.equalsIgnoreCase("exit")) {
-                    socket.close();
-                }
-                
-                
-                
-                if(testingRTT) {
+                } else if(decodedPacket.equalsIgnoreCase("throughput")) {
+                    // set test mode
+                    testingRTT = false;
+                    // return ACK
+                    InetAddress address = packet.getAddress();
+                    int port = packet.getPort();
+                    buf = performXOR("RECEIVED", key).getBytes();
+                    packet = new DatagramPacket(buf, buf.length, address, port);
+                    socket.send(packet);
+                } else if(testingRTT) {
+                    // echo client response
                     responseString = performXOR(decodedPacket, key);
                     InetAddress address = packet.getAddress();
                     int port = packet.getPort();
                     buf = responseString.getBytes();
                     packet = new DatagramPacket(buf, buf.length, address, port);
                     socket.send(packet);
-                } else {
-                    System.out.println("The received packet is: " + decodedPacket);
-                    totalBytes = totalBytes - decodedPacket.getBytes().length;
-                    System.out.println(totalBytes);
-                        responseString = performXOR("RECEIVED", key);
-                        InetAddress address = packet.getAddress();
-                        int port = packet.getPort();
-                        buf = responseString.getBytes();
-                        packet = new DatagramPacket(buf, buf.length, address, port);
-                        socket.send(packet);
-                    if(totalBytes <= 0) {
-                        totalBytes = 1000000;
-                        // responseString = performXOR("RECEIVED", key);
-                        // InetAddress address = packet.getAddress();
-                        // int port = packet.getPort();
-                        // buf = responseString.getBytes();
-                        // packet = new DatagramPacket(buf, buf.length, address, port);
-                        // socket.send(packet);
-                    }
+                } else if(!testingRTT) {
+                    //System.out.println("The received packet is: " + decodedPacket);
+                    
+                    // subtract from totalBytes so we can track when 1Mbyte of datahas been sent
+                    //totalBytes = totalBytes - decodedPacket.getBytes().length;
+                    
+                    //System.out.println(totalBytes);
+                    
+                    // return ACK after each packet to ensure everything makes it to server
+                    responseString = performXOR("RECEIVED", key);
+                    InetAddress address = packet.getAddress();
+                    int port = packet.getPort();
+                    buf = responseString.getBytes();
+                    packet = new DatagramPacket(buf, buf.length, address, port);
+                    socket.send(packet);
+                    
+                    
+                    // if(totalBytes <= 0) {
+                    //     totalBytes = 1024000;
+                    //     // responseString = performXOR("RECEIVED", key);
+                    //     // InetAddress address = packet.getAddress();
+                    //     // int port = packet.getPort();
+                    //     // buf = responseString.getBytes();
+                    //     // packet = new DatagramPacket(buf, buf.length, address, port);
+                    //     // socket.send(packet);
+                    // }
+                } else{
+                    socket.close();
                 }
                 
 

@@ -3,6 +3,7 @@ import java.net.*;
 import java.util.*;
 
 public class UDPClient {
+    // filepaths for CSV files
     public static File rttFile = new File("UDPRTT.csv");
     public static File throughputFile = new File("UDPThroughput.csv");
     public static void main(String[] args) throws IOException, InterruptedException {
@@ -16,13 +17,11 @@ public class UDPClient {
         System.out.println("Testing [RTT or throughput]? ");
         String choice = scanner.next();
 
-        // will get rid of harcoded value later :)
+        // key for XOR encoding
         long key = 1927391273;
         
         // get a datagram socket
         DatagramSocket socket = new DatagramSocket();
-
-        // socket.setSoTimeout(5);
 
         // establish host address
         InetAddress address = InetAddress.getByName(host);
@@ -90,31 +89,36 @@ public class UDPClient {
     }
 
     // Method for measuring Throughput. Sends x messages based on byteSize and sampleSize. Calculates Throughput.
+    /*
+     * For UDP, I use an ACK to make sure packets actually make it to its destination for a proper measure of throughput.
+     */
     public static void measureThroughput(int byteSize, int sampleSize, long key, DatagramSocket socket, InetAddress address, int port, FileWriter csv) throws IOException, InterruptedException {
         System.out.println("********************* " + sampleSize + " X " + byteSize + "Byte Messages*********************");
         for(int k = 0; k < 20; k++) {
             csv.write(System.getProperty("line.separator"));
             long startTime = System.nanoTime();
-            byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
-            byte[] buf2 = new byte[5000];
+            byte[] sendBuf = performXOR(createMessage(byteSize), key).getBytes();
+            byte[] receiveBuf = new byte[5000];
             
-            DatagramPacket packet = new DatagramPacket(buf,buf.length,address,port);
+            DatagramPacket sendPacket = new DatagramPacket(sendBuf,sendBuf.length,address,port);
             //System.out.println(performXOR(new String(packet.getData(),0,packet.getLength()), key));
             for(int i = 0; i < sampleSize; i++) {
-            
-                packet = new DatagramPacket(buf,buf.length,address,port);
-                socket.send(packet);
+                
+                socket.send(sendPacket);
                 
                 //System.out.println("Sending: " + performXOR(new String(packet.getData(),0,packet.getLength()), key));
-                DatagramPacket packet2 = new DatagramPacket(buf2, buf2.length);
-                socket.receive(packet2);
                 
+                // receive ACK before sending packets again -- did some testing and doing the send without this
+                // resulted in lost packets (perhaps, because it was sending too fast.)
+                DatagramPacket receivePacket = new DatagramPacket(receiveBuf, receiveBuf.length);
+                socket.receive(receivePacket);
                 
+                //System.out.println(performXOR(new String(receivePacket.getData(), 0, receivePacket.getLength()), key));
             
             }
             
-            System.out.println(performXOR(new String(packet.getData(), 0, packet.getLength()), key));
-        
+            
+            // calculate duration
             long duration = System.nanoTime() - startTime;
             double throughput = ((byteSize * 8.0 * sampleSize)/Math.pow(10, 6))/(duration/1000000000.00);
             System.out.println("Throughput (Megasbits/second): " + throughput);
