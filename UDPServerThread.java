@@ -21,7 +21,7 @@ public class UDPServerThread extends Thread {
     public UDPServerThread(String name) throws IOException {
         super(name);
         // initialize server on port 3000
-        socket = new DatagramSocket(26925);
+        socket = new DatagramSocket(3000);
 
     }
 
@@ -75,14 +75,20 @@ public class UDPServerThread extends Thread {
                     System.out.println("The received packet is: " + decodedPacket);
                     totalBytes = totalBytes - decodedPacket.getBytes().length;
                     System.out.println(totalBytes);
-                    if(totalBytes <= 0) {
-                        totalBytes = 1000000;
                         responseString = performXOR("RECEIVED", key);
                         InetAddress address = packet.getAddress();
                         int port = packet.getPort();
                         buf = responseString.getBytes();
                         packet = new DatagramPacket(buf, buf.length, address, port);
                         socket.send(packet);
+                    if(totalBytes <= 0) {
+                        totalBytes = 1000000;
+                        // responseString = performXOR("RECEIVED", key);
+                        // InetAddress address = packet.getAddress();
+                        // int port = packet.getPort();
+                        // buf = responseString.getBytes();
+                        // packet = new DatagramPacket(buf, buf.length, address, port);
+                        // socket.send(packet);
                     }
                 }
                 

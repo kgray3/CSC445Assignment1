@@ -96,33 +96,23 @@ public class UDPClient {
             csv.write(System.getProperty("line.separator"));
             long startTime = System.nanoTime();
             byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
+            byte[] buf2 = new byte[5000];
             
             DatagramPacket packet = new DatagramPacket(buf,buf.length,address,port);
-            System.out.println(performXOR(new String(packet.getData(),0,packet.getLength()), key));
+            //System.out.println(performXOR(new String(packet.getData(),0,packet.getLength()), key));
             for(int i = 0; i < sampleSize; i++) {
-                if (i % 100 == 0) {
-                    System.out.println(i);
-                } else if (i == sampleSize - 1) {
-                    System.out.println(sampleSize);
-                }
-                
-                
+            
+                packet = new DatagramPacket(buf,buf.length,address,port);
                 socket.send(packet);
-                Thread.sleep(1);
-                //System.out.println("Response: " + performXOR(new String(packet.getData(),0,packet.getLength()), key));
                 
-                // try {
-                //     packet = new DatagramPacket(buf, buf.length);
-                //     socket.receive(packet);
-                // } catch(SocketTimeoutException e) {
-                //     socket.send(packet);
-                //     continue;
-                // }
+                //System.out.println("Sending: " + performXOR(new String(packet.getData(),0,packet.getLength()), key));
+                DatagramPacket packet2 = new DatagramPacket(buf2, buf2.length);
+                socket.receive(packet2);
+                
                 
             
             }
-            packet = new DatagramPacket(buf, buf.length);
-            socket.receive(packet);
+            
             System.out.println(performXOR(new String(packet.getData(), 0, packet.getLength()), key));
         
             long duration = System.nanoTime() - startTime;
