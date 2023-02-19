@@ -71,7 +71,9 @@ public class EchoClient {
                 out.println(performXOR("throughput", key));
                 in.readLine();
                 measureThroughput(1024, 1024, key, out, in,csvWriter);
+                out.flush();
                 measureThroughput(512, 2048, key, out, in,csvWriter);
+                out.flush();
                 measureThroughput(128, 8192, key, out, in,csvWriter);
                 csvWriter.close();
                 out.println(performXOR("exit", key));
@@ -102,6 +104,7 @@ public class EchoClient {
                 long startTime = System.nanoTime();
                 out.println(performXOR(createMessage(byteSize),key));
                 //System.out.println("Echo: " + performXOR(in.readLine().toString(),key));
+                in.readLine();
                 long duration = System.nanoTime() - startTime;
                 System.out.println(duration);
                 csv.write(String.valueOf(byteSize) + ", " + String.valueOf(duration));
@@ -110,20 +113,24 @@ public class EchoClient {
     // Method to measure throughput based on input byteSize and sampleSize. XOR encoding before sending messages.
     public static void measureThroughput(int byteSize, int sampleSize, long key, PrintWriter out, BufferedReader in, FileWriter csv) throws IOException {
         System.out.println("********************* " + sampleSize + " X " + byteSize + "Byte Messages*********************");
-        for(int i = 0; i < 5; i++) {
+        for(int i = 0; i < 20; i++){
             csv.write(System.getProperty( "line.separator" ));
             long startTime = System.nanoTime();
                 for(int k = 0; k < sampleSize; k++) {
 
                     out.println(performXOR(createMessage(byteSize), key));
-                    //System.out.println("Response: " + performXOR(in.readLine().toString(), key));
+                    //in.readLine();
+                    // System.out.println("Response: " + performXOR(in.readLine().toString(), key));
                 }
+                //in.readLine();
+                System.out.println("Response: " + performXOR(in.readLine().toString(), key));
         
             long duration = System.nanoTime() - startTime;
             double throughput = ((byteSize * 8.0 * sampleSize)/Math.pow(10, 6))/(duration/1000000000.00);
             System.out.println("Throughput (Megabits/second): " + throughput);
             csv.write(String.valueOf(sampleSize) + " x " + String.valueOf(byteSize) + ", " + String.valueOf(throughput));
         }
+        
     }
 
     // Method performing XOR encoding/decoding on   a message with an input key
@@ -142,6 +149,7 @@ public class EchoClient {
         for(int i = 0; i < bytes; i++) {
             message += 'a';
         }
+        // System.out.println(message.getBytes().length);
         return message;
     }
 

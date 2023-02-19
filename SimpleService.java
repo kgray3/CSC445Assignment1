@@ -8,6 +8,7 @@ public class SimpleService {
         try{
             //TO-DO: Scanner inputs for host, port, and key
             boolean testingRTT = true;
+            int totalBytes = 1000010;
             long key = 1927391273;
             ServerSocket serverSocket = new ServerSocket(PORT);
             Socket client = serverSocket.accept();
@@ -31,6 +32,7 @@ public class SimpleService {
                         testingRTT = true;
                     } else if (decodedCMD.equalsIgnoreCase("throughput")) {
                         testingRTT = false;
+                        out.println(performXOR("RECEIVED", key));
                     } else if(decodedCMD.equalsIgnoreCase("exit")) {
                         out.close();
                         in.close();
@@ -43,15 +45,23 @@ public class SimpleService {
                     if(testingRTT) {
                         // if we're measuring RTT, echo the message
                         reply = cmd;
+                        out.println(reply);
                     } else{
                         // if we're measuring throughput, send an 8-byte acknowledgement
                         reply = performXOR("RECEIVED", key);
+                        totalBytes = totalBytes - decodedCMD.getBytes().length;
+                        System.out.println(totalBytes);
+                        if( totalBytes <= 0) {
+                            totalBytes = 1000000;
+                            out.println(reply);
+                        }
+                        
                     }
                     
                     //int len = reply.length();
                     // send the response
-                    out.println(reply);
-                    //System.out.println("The decoded message is: " + decodedCMD);
+                    //out.println(reply);
+                    System.out.println("The decoded message is: " + decodedCMD.getBytes().length);
                     
             }
         }

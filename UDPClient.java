@@ -5,7 +5,7 @@ import java.util.*;
 public class UDPClient {
     public static File rttFile = new File("UDPRTT.csv");
     public static File throughputFile = new File("UDPThroughput.csv");
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException, InterruptedException {
 
         // Scanner for collecting host, port #, and testing mode
         Scanner scanner = new Scanner(System.in);
@@ -21,6 +21,8 @@ public class UDPClient {
         
         // get a datagram socket
         DatagramSocket socket = new DatagramSocket();
+
+        // socket.setSoTimeout(5);
 
         // establish host address
         InetAddress address = InetAddress.getByName(host);
@@ -88,23 +90,41 @@ public class UDPClient {
     }
 
     // Method for measuring Throughput. Sends x messages based on byteSize and sampleSize. Calculates Throughput.
-    public static void measureThroughput(int byteSize, int sampleSize, long key, DatagramSocket socket, InetAddress address, int port, FileWriter csv) throws IOException {
+    public static void measureThroughput(int byteSize, int sampleSize, long key, DatagramSocket socket, InetAddress address, int port, FileWriter csv) throws IOException, InterruptedException {
         System.out.println("********************* " + sampleSize + " X " + byteSize + "Byte Messages*********************");
         for(int k = 0; k < 20; k++) {
             csv.write(System.getProperty("line.separator"));
             long startTime = System.nanoTime();
+            byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
+            
+            DatagramPacket packet = new DatagramPacket(buf,buf.length,address,port);
+            System.out.println(performXOR(new String(packet.getData(),0,packet.getLength()), key));
             for(int i = 0; i < sampleSize; i++) {
+                if (i % 100 == 0) {
+                    System.out.println(i);
+                } else if (i == sampleSize - 1) {
+                    System.out.println(sampleSize);
+                }
                 
-                byte[] buf = performXOR(createMessage(byteSize), key).getBytes();
-                DatagramPacket packet = new DatagramPacket(buf,buf.length,address,port);
-            
+                
                 socket.send(packet);
-                packet = new DatagramPacket(buf, buf.length);
-                socket.receive(packet);
-            
+                Thread.sleep(1);
                 //System.out.println("Response: " + performXOR(new String(packet.getData(),0,packet.getLength()), key));
+                
+                // try {
+                //     packet = new DatagramPacket(buf, buf.length);
+                //     socket.receive(packet);
+                // } catch(SocketTimeoutException e) {
+                //     socket.send(packet);
+                //     continue;
+                // }
+                
             
             }
+            packet = new DatagramPacket(buf, buf.length);
+            socket.receive(packet);
+            System.out.println(performXOR(new String(packet.getData(), 0, packet.getLength()), key));
+        
             long duration = System.nanoTime() - startTime;
             double throughput = ((byteSize * 8.0 * sampleSize)/Math.pow(10, 6))/(duration/1000000000.00);
             System.out.println("Throughput (Megasbits/second): " + throughput);

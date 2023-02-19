@@ -21,17 +21,18 @@ public class UDPServerThread extends Thread {
     public UDPServerThread(String name) throws IOException {
         super(name);
         // initialize server on port 3000
-        socket = new DatagramSocket(3000);
+        socket = new DatagramSocket(26925);
 
     }
 
     public void run() {
         // bool for if we are testing RTT or not
         boolean testingRTT = true;
+        int totalBytes = 1024010;
         while (moreQuotes) {
             try{
                 // size of request?
-                byte[] buf = new byte[1024];
+                byte[] buf = new byte[5000];
 
                 // receive request
                 DatagramPacket packet = new DatagramPacket(buf, buf.length);
@@ -46,35 +47,57 @@ public class UDPServerThread extends Thread {
                  * --if message "throughput" is received, testingRTT is set to false
                  * --if message "exit" is received, close out of server
                  */
-                if(decodedPacket.equalsIgnoreCase("RTT")) {
+                String responseString = "";
+                
+                 if(decodedPacket.equalsIgnoreCase("RTT")) {
                     testingRTT = true;
                 } else if(decodedPacket.equalsIgnoreCase("throughput")) {
                     testingRTT = false;
+                    InetAddress address = packet.getAddress();
+                    int port = packet.getPort();
+                    buf = performXOR("RECEIVED", key).getBytes();
+                    packet = new DatagramPacket(buf, buf.length, address, port);
+                    socket.send(packet);
                 } else if(decodedPacket.equalsIgnoreCase("exit")) {
                     socket.close();
                 }
-
                 
-
-                // figure out response
-                String responseString = "";
-
-                // if testing RTT, echo response; otherwise send 8 byte response of "RECEIVED"
+                
+                
                 if(testingRTT) {
                     responseString = performXOR(decodedPacket, key);
+                    InetAddress address = packet.getAddress();
+                    int port = packet.getPort();
+                    buf = responseString.getBytes();
+                    packet = new DatagramPacket(buf, buf.length, address, port);
+                    socket.send(packet);
                 } else {
-                    responseString = performXOR("RECEIVED", key);
+                    System.out.println("The received packet is: " + decodedPacket);
+                    totalBytes = totalBytes - decodedPacket.getBytes().length;
+                    System.out.println(totalBytes);
+                    if(totalBytes <= 0) {
+                        totalBytes = 1000000;
+                        responseString = performXOR("RECEIVED", key);
+                        InetAddress address = packet.getAddress();
+                        int port = packet.getPort();
+                        buf = responseString.getBytes();
+                        packet = new DatagramPacket(buf, buf.length, address, port);
+                        socket.send(packet);
+                    }
                 }
+                
+
+                
 
                 // convert resposne string to bytes for packet creation
                 buf = responseString.getBytes();
 
                 // send the response to the client at "address" and "port"
-                InetAddress address = packet.getAddress();
-                int port = packet.getPort();
-                packet = new DatagramPacket(buf, buf.length, address, port);
-                socket.send(packet);
-                System.out.println("The received packet is: " + decodedPacket);
+                // InetAddress address = packet.getAddress();
+                // int port = packet.getPort();
+                // packet = new DatagramPacket(buf, buf.length, address, port);
+                // socket.send(packet);
+                
             } catch (IOException e) {
                 e.printStackTrace();
                 moreQuotes = false;
